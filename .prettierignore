@@ -1,0 +1,23 @@
+# Prettier Ignore File
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+.expo/
+.expo-shared/
+android/
+ios/
+
+# Claude Code
+.claude/
+
+# Git
+.git/
+
+# Other
+coverage/
+*.log

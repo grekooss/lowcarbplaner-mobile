@@ -1,0 +1,33 @@
+# EditorConfig - Spójność formatowania w zespole
+# https://editorconfig.org
+
+root = true
+
+# Wszystkie pliki
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Pliki Markdown (nie obcinamy białych znaków na końcu)
+[*.md]
+trim_trailing_whitespace = false
+
+# Pliki YAML
+[*.{yml,yaml}]
+indent_size = 2
+
+# Pliki JSON
+[*.json]
+indent_size = 2
+
+# Package.json - specjalna obsługa
+[package.json]
+indent_size = 2
+
+# Makefiles wymagają tabulacji
+[Makefile]
+indent_style = tab
