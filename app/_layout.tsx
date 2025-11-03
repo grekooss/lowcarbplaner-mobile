@@ -11,6 +11,7 @@ import 'react-native-reanimated'
 
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { AppQueryClientProvider } from '@src/providers/query-client-provider'
+import AuthModal from '@src/components/auth/auth-modal'
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -34,6 +35,7 @@ export default function RootLayout() {
           </Stack>
           <StatusBar style='auto' />
           <Toast />
+          <AuthModal />
         </ThemeProvider>
       </AppQueryClientProvider>
     </GestureHandlerRootView>

@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 
 type ActivityLevel = 'very_low' | 'low' | 'moderate' | 'high' | 'very_high'
@@ -75,7 +75,7 @@ export default function OnboardingStep2() {
     if (!isValid) return
 
     // TODO: Zapisać dane i wysłać do API
-    router.replace('/(app)')
+    router.replace('/(app)' as any)
   }
 
   return (

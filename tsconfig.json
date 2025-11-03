@@ -17,5 +17,5 @@
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  "exclude": ["WEB/**/*", "node_modules"]
+  "exclude": ["WEB/**/*", "MATCHTI/**/*", "node_modules"]
 }

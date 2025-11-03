@@ -11,7 +11,6 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import Checkbox from 'expo-checkbox'
@@ -26,74 +25,69 @@ export default function OnboardingScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>Witaj w LowCarb Planer! 👋</Text>
-            <Text style={styles.subtitle}>
-              Zanim zaczniemy, przeczytaj ważne informacje
-            </Text>
-          </View>
-
-          {/* Disclaimer */}
-          <View style={styles.disclaimerContainer}>
-            <Text style={styles.disclaimerTitle}>
-              ⚠️ Ważne zastrzeżenia medyczne
-            </Text>
-            <Text style={styles.disclaimerText}>
-              <Text style={styles.bold}>LowCarb Planer</Text> to narzędzie
-              wspierające planowanie posiłków, ale nie zastępuje konsultacji z
-              lekarzem lub dietetykiem.
-            </Text>
-            <View style={styles.disclaimerPoints}>
-              <Text style={styles.point}>
-                • Przed rozpoczęciem diety skonsultuj się z lekarzem
-              </Text>
-              <Text style={styles.point}>
-                • Dieta low-carb może nie być odpowiednia dla każdego
-              </Text>
-              <Text style={styles.point}>
-                • Aplikacja nie diagnozuje ani nie leczy chorób
-              </Text>
-              <Text style={styles.point}>
-                • Obliczenia są przybliżone i mogą wymagać dostosowania
-              </Text>
-            </View>
-          </View>
-
-          {/* Checkbox */}
-          <TouchableOpacity
-            style={styles.checkboxContainer}
-            onPress={() => setDisclaimerAccepted(!disclaimerAccepted)}
-            activeOpacity={0.8}
-          >
-            <Checkbox
-              value={disclaimerAccepted}
-              onValueChange={setDisclaimerAccepted}
-              color={disclaimerAccepted ? '#5A31F4' : undefined}
-              style={styles.checkbox}
-            />
-            <Text style={styles.checkboxLabel}>
-              Rozumiem i akceptuję powyższe zastrzeżenia
-            </Text>
-          </TouchableOpacity>
-
-          {/* Continue Button */}
-          <TouchableOpacity
-            style={[
-              styles.button,
-              !disclaimerAccepted && styles.buttonDisabled,
-            ]}
-            onPress={handleContinue}
-            disabled={!disclaimerAccepted}
-          >
-            <Text style={styles.buttonText}>Kontynuuj</Text>
-          </TouchableOpacity>
+    <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.content}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Witaj w LowCarb Planer! 👋</Text>
+          <Text style={styles.subtitle}>
+            Zanim zaczniemy, przeczytaj ważne informacje
+          </Text>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        {/* Disclaimer */}
+        <View style={styles.disclaimerContainer}>
+          <Text style={styles.disclaimerTitle}>
+            ⚠️ Ważne zastrzeżenia medyczne
+          </Text>
+          <Text style={styles.disclaimerText}>
+            <Text style={styles.bold}>LowCarb Planer</Text> to narzędzie
+            wspierające planowanie posiłków, ale nie zastępuje konsultacji z
+            lekarzem lub dietetykiem.
+          </Text>
+          <View style={styles.disclaimerPoints}>
+            <Text style={styles.point}>
+              • Przed rozpoczęciem diety skonsultuj się z lekarzem
+            </Text>
+            <Text style={styles.point}>
+              • Dieta low-carb może nie być odpowiednia dla każdego
+            </Text>
+            <Text style={styles.point}>
+              • Aplikacja nie diagnozuje ani nie leczy chorób
+            </Text>
+            <Text style={styles.point}>
+              • Obliczenia są przybliżone i mogą wymagać dostosowania
+            </Text>
+          </View>
+        </View>
+
+        {/* Checkbox */}
+        <TouchableOpacity
+          style={styles.checkboxContainer}
+          onPress={() => setDisclaimerAccepted(!disclaimerAccepted)}
+          activeOpacity={0.8}
+        >
+          <Checkbox
+            value={disclaimerAccepted}
+            onValueChange={setDisclaimerAccepted}
+            color={disclaimerAccepted ? '#5A31F4' : undefined}
+            style={styles.checkbox}
+          />
+          <Text style={styles.checkboxLabel}>
+            Rozumiem i akceptuję powyższe zastrzeżenia
+          </Text>
+        </TouchableOpacity>
+
+        {/* Continue Button */}
+        <TouchableOpacity
+          style={[styles.button, !disclaimerAccepted && styles.buttonDisabled]}
+          onPress={handleContinue}
+          disabled={!disclaimerAccepted}
+        >
+          <Text style={styles.buttonText}>Kontynuuj</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   )
 }
 

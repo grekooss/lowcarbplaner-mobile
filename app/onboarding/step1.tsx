@@ -12,7 +12,6 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 
@@ -43,126 +42,124 @@ export default function OnboardingStep1() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps='handled'
-      >
-        <View style={styles.content}>
-          {/* Progress */}
-          <View style={styles.progress}>
-            <View style={[styles.progressBar, { width: '33%' }]} />
-          </View>
-          <Text style={styles.progressText}>Krok 1 z 3</Text>
+    <ScrollView
+      contentContainerStyle={styles.scrollContent}
+      keyboardShouldPersistTaps='handled'
+    >
+      <View style={styles.content}>
+        {/* Progress */}
+        <View style={styles.progress}>
+          <View style={[styles.progressBar, { width: '33%' }]} />
+        </View>
+        <Text style={styles.progressText}>Krok 1 z 3</Text>
 
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>Twoje dane podstawowe</Text>
-            <Text style={styles.subtitle}>
-              Pomogą nam obliczyć idealne zapotrzebowanie kaloryczne
-            </Text>
-          </View>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Twoje dane podstawowe</Text>
+          <Text style={styles.subtitle}>
+            Pomogą nam obliczyć idealne zapotrzebowanie kaloryczne
+          </Text>
+        </View>
 
-          {/* Form */}
-          <View style={styles.form}>
-            {/* Gender Selection */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Płeć</Text>
-              <View style={styles.genderButtons}>
-                <TouchableOpacity
+        {/* Form */}
+        <View style={styles.form}>
+          {/* Gender Selection */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Płeć</Text>
+            <View style={styles.genderButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.genderButton,
+                  gender === 'male' && styles.genderButtonActive,
+                ]}
+                onPress={() => setGender('male')}
+              >
+                <Text
                   style={[
-                    styles.genderButton,
-                    gender === 'male' && styles.genderButtonActive,
+                    styles.genderButtonText,
+                    gender === 'male' && styles.genderButtonTextActive,
                   ]}
-                  onPress={() => setGender('male')}
                 >
-                  <Text
-                    style={[
-                      styles.genderButtonText,
-                      gender === 'male' && styles.genderButtonTextActive,
-                    ]}
-                  >
-                    Mężczyzna
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
+                  Mężczyzna
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.genderButton,
+                  gender === 'female' && styles.genderButtonActive,
+                ]}
+                onPress={() => setGender('female')}
+              >
+                <Text
                   style={[
-                    styles.genderButton,
-                    gender === 'female' && styles.genderButtonActive,
+                    styles.genderButtonText,
+                    gender === 'female' && styles.genderButtonTextActive,
                   ]}
-                  onPress={() => setGender('female')}
                 >
-                  <Text
-                    style={[
-                      styles.genderButtonText,
-                      gender === 'female' && styles.genderButtonTextActive,
-                    ]}
-                  >
-                    Kobieta
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Age */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Wiek (lata)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder='np. 35'
-                placeholderTextColor='#6b7280'
-                value={age}
-                onChangeText={setAge}
-                keyboardType='number-pad'
-              />
-            </View>
-
-            {/* Weight */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Waga (kg)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder='np. 75'
-                placeholderTextColor='#6b7280'
-                value={weight}
-                onChangeText={setWeight}
-                keyboardType='decimal-pad'
-              />
-            </View>
-
-            {/* Height */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Wzrost (cm)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder='np. 175'
-                placeholderTextColor='#6b7280'
-                value={height}
-                onChangeText={setHeight}
-                keyboardType='number-pad'
-              />
+                  Kobieta
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Navigation */}
-          <View style={styles.navigation}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <Text style={styles.backButtonText}>Wstecz</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, !isValid && styles.buttonDisabled]}
-              onPress={handleContinue}
-              disabled={!isValid}
-            >
-              <Text style={styles.buttonText}>Dalej</Text>
-            </TouchableOpacity>
+          {/* Age */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Wiek (lata)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder='np. 35'
+              placeholderTextColor='#6b7280'
+              value={age}
+              onChangeText={setAge}
+              keyboardType='number-pad'
+            />
+          </View>
+
+          {/* Weight */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Waga (kg)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder='np. 75'
+              placeholderTextColor='#6b7280'
+              value={weight}
+              onChangeText={setWeight}
+              keyboardType='decimal-pad'
+            />
+          </View>
+
+          {/* Height */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Wzrost (cm)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder='np. 175'
+              placeholderTextColor='#6b7280'
+              value={height}
+              onChangeText={setHeight}
+              keyboardType='number-pad'
+            />
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        {/* Navigation */}
+        <View style={styles.navigation}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>Wstecz</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, !isValid && styles.buttonDisabled]}
+            onPress={handleContinue}
+            disabled={!isValid}
+          >
+            <Text style={styles.buttonText}>Dalej</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
   )
 }
 

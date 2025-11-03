@@ -81,9 +81,11 @@ export interface PasswordStrengthResult {
 export interface UseAuthReturn {
   isLoading: boolean
   error: string | null
+  user: { id: string; email: string } | null
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string) => Promise<void>
   loginWithGoogle: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
   updatePassword: (password: string) => Promise<void>
+  logout: () => Promise<void>
 }

@@ -5,12 +5,13 @@
  * Handles login, registration, password reset with Expo Router navigation
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'expo-router'
 import Toast from 'react-native-toast-message'
 import { supabase } from '@src/lib/supabase/client'
 import { translateAuthError } from '@src/lib/utils/auth-errors'
 import type { UseAuthReturn } from '@src/types/auth-view.types'
+import type { User } from '@supabase/supabase-js'
 
 /**
  * Hook do zarządzania autentykacją użytkownika w React Native
@@ -33,6 +34,36 @@ export function useAuth(redirectTo?: string): UseAuthReturn {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null)
+
+  // Listen for auth changes
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+        })
+      }
+    })
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+        })
+      } else {
+        setUser(null)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   /**
    * Logowanie z email i hasłem
@@ -236,13 +267,48 @@ export function useAuth(redirectTo?: string): UseAuthReturn {
     [router]
   )
 
+  /**
+   * Wylogowanie użytkownika
+   */
+  const logout = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const { error: authError } = await supabase.auth.signOut()
+
+      if (authError) throw authError
+
+      setUser(null)
+      router.replace('/auth/login' as any)
+
+      Toast.show({
+        type: 'success',
+        text1: 'Wylogowano',
+        text2: 'Do zobaczenia!',
+      })
+    } catch (err: any) {
+      const errorMessage = translateAuthError(err.message)
+      setError(errorMessage)
+      Toast.show({
+        type: 'error',
+        text1: 'Błąd wylogowania',
+        text2: errorMessage,
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [router])
+
   return {
     isLoading,
     error,
+    user,
     login,
     register,
     loginWithGoogle,
     resetPassword,
     updatePassword,
+    logout,
   }
 }

@@ -11,7 +11,7 @@
 **Tech Stack:**
 
 - **Framework:** Next.js 15.5.4 (App Router, React 19)
-- **Styling:** Tailwind CSS 4 + Radix UI
+- **Styling:** Unistyles
 - **State Management:** Zustand + TanStack Query
 - **Backend:** Supabase (Auth + PostgreSQL)
 - **Forms:** React Hook Form + Zod
