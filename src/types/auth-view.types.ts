@@ -82,6 +82,7 @@ export interface UseAuthReturn {
   isLoading: boolean
   error: string | null
   user: { id: string; email: string } | null
+  isInitializing: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string) => Promise<void>
   loginWithGoogle: () => Promise<void>

@@ -16,11 +16,9 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
-  TouchableOpacity,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { format, startOfWeek, endOfWeek } from 'date-fns'
-import { pl } from 'date-fns/locale'
 
 // Komponenty
 import { CategorySection } from '@src/components/shopping-list/category-section'
@@ -31,7 +29,6 @@ import { ProtectedScreen } from '@src/components/auth/protected-screen'
 import {
   useShoppingList,
   useTogglePurchased,
-  useClearPurchased,
 } from '@src/hooks/api/use-shopping-list'
 
 export default function ShoppingListScreen() {
@@ -49,17 +46,12 @@ export default function ShoppingListScreen() {
     refetch,
   } = useShoppingList(startDate, endDate)
   const togglePurchased = useTogglePurchased()
-  const clearPurchased = useClearPurchased()
 
   const handleTogglePurchased = (
     ingredientId: number,
     isPurchased: boolean
   ) => {
     togglePurchased.mutate({ ingredientId, isPurchased, startDate, endDate })
-  }
-
-  const handleClearAll = () => {
-    clearPurchased.mutate({ startDate, endDate })
   }
 
   const handleRefresh = async () => {
@@ -78,7 +70,10 @@ export default function ShoppingListScreen() {
   return (
     <ProtectedScreen
       placeholder={
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+          style={styles.container}
+          edges={['left', 'right', 'bottom']}
+        >
           <View style={styles.placeholderContainer}>
             <Text style={styles.placeholderTitle}>Lista Zakupów</Text>
             <Text style={styles.placeholderMessage}>
@@ -88,33 +83,10 @@ export default function ShoppingListScreen() {
         </SafeAreaView>
       }
     >
-      <SafeAreaView style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.headerTitle}>Lista Zakupów</Text>
-            <Text style={styles.headerSubtitle}>
-              {format(weekStart, 'd MMM', { locale: pl })} -{' '}
-              {format(weekEnd, 'd MMM yyyy', { locale: pl })}
-            </Text>
-          </View>
-
-          {/* Clear button */}
-          {purchasedItems > 0 && (
-            <TouchableOpacity
-              style={styles.clearButton}
-              onPress={handleClearAll}
-              disabled={clearPurchased.isPending}
-            >
-              <IconSymbol
-                name='arrow.counterclockwise'
-                size={18}
-                color='#ef4444'
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-
+      <SafeAreaView
+        style={styles.container}
+        edges={['left', 'right', 'bottom']}
+      >
         {/* Progress bar */}
         {totalItems > 0 && (
           <View style={styles.progressContainer}>
@@ -174,33 +146,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f9fafb',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
-    backgroundColor: '#ffffff',
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  clearButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#fef2f2',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   progressContainer: {
     paddingHorizontal: 16,

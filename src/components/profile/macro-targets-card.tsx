@@ -91,7 +91,7 @@ function MacroItem({
   return (
     <View style={styles.macroItem}>
       <View style={[styles.iconContainer, { backgroundColor: `${color}15` }]}>
-        <IconSymbol name={icon} size={24} color={color} />
+        <IconSymbol name={icon as any} size={24} color={color} />
       </View>
       <Text style={styles.macroLabel}>{label}</Text>
       <Text style={styles.macroValue}>

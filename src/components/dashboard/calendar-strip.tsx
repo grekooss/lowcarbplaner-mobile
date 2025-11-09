@@ -1,21 +1,27 @@
 /**
  * CalendarStrip Component
  *
- * Horizontal scroll z datami (7 dni):
+ * Stały pasek z datami (7 dni):
+ * - 7 dni zaczynając od dzisiaj (dzisiaj + 6 kolejnych dni)
+ * - Wszystkie dni widoczne na ekranie (bez przewijania)
  * - Wybór dnia
  * - Oznaczenie dzisiejszego dnia
- * - Smooth scroll do wybranego dnia
  */
 
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native'
-import { format, addDays, isSameDay, isToday } from 'date-fns'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { format, addDays, isSameDay, isToday, getMonth } from 'date-fns'
 import { pl } from 'date-fns/locale'
+
+// Mapowanie skróconych nazw dni tygodnia
+const DAY_NAMES: Record<string, string> = {
+  pon: 'Pon',
+  wt: 'Wt',
+  śr: 'Śr',
+  czw: 'Czw',
+  pt: 'Pt',
+  sob: 'Sob',
+  niedz: 'Nie',
+}
 
 interface CalendarStripProps {
   selectedDate: Date
@@ -36,9 +42,9 @@ function DayItem({
   isToday: boolean
   onPress: () => void
 }) {
-  const dayName = format(date, 'EEE', { locale: pl })
+  const dayName = format(date, 'EEEEEE', { locale: pl }).toLowerCase()
   const dayNumber = format(date, 'd')
-  const monthName = format(date, 'MMM', { locale: pl })
+  const displayDayName = DAY_NAMES[dayName] || dayName
 
   return (
     <TouchableOpacity
@@ -50,13 +56,10 @@ function DayItem({
       onPress={onPress}
     >
       <Text style={[styles.dayName, isSelected && styles.dayNameSelected]}>
-        {dayName}
+        {displayDayName}
       </Text>
       <Text style={[styles.dayNumber, isSelected && styles.dayNumberSelected]}>
         {dayNumber}
-      </Text>
-      <Text style={[styles.monthName, isSelected && styles.monthNameSelected]}>
-        {monthName}
       </Text>
       {isTodayFlag && !isSelected && <View style={styles.todayIndicator} />}
     </TouchableOpacity>
@@ -70,17 +73,33 @@ export function CalendarStrip({
   selectedDate,
   onDateSelect,
 }: CalendarStripProps) {
-  // Generuj 7 dni (dzisiaj ± 3 dni)
+  // Generuj 7 dni zaczynając od dzisiaj
   const today = new Date()
-  const days = Array.from({ length: 7 }, (_, i) => addDays(today, i - 3))
+  const days = Array.from({ length: 7 }, (_, i) => addDays(today, i))
+
+  // Sprawdź, czy dni obejmują różne miesiące
+  const firstDay = days[0]!
+  const lastDay = days[days.length - 1]!
+  const firstMonth = getMonth(firstDay)
+  const lastMonth = getMonth(lastDay)
+
+  let monthsHeader = ''
+  if (firstMonth === lastMonth) {
+    // Jeden miesiąc
+    monthsHeader = format(firstDay, 'LLLL', { locale: pl })
+  } else {
+    // Dwa miesiące
+    const firstMonthName = format(firstDay, 'LLLL', { locale: pl })
+    const lastMonthName = format(lastDay, 'LLLL', { locale: pl })
+    monthsHeader = `${firstMonthName} - ${lastMonthName}`
+  }
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
+      {/* Nagłówek z miesiącem/miesiącami */}
+      <Text style={styles.monthsHeader}>{monthsHeader}</Text>
+
+      <View style={styles.daysContainer}>
         {days.map((day, index) => (
           <DayItem
             key={index}
@@ -90,7 +109,7 @@ export function CalendarStrip({
             onPress={() => onDateSelect(day)}
           />
         ))}
-      </ScrollView>
+      </View>
     </View>
   )
 }
@@ -98,25 +117,33 @@ export function CalendarStrip({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 8,
+    borderRadius: 12,
+    padding: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  scrollContent: {
-    gap: 8,
-    paddingHorizontal: 4,
+  monthsHeader: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 8,
+    textTransform: 'capitalize',
+  },
+  daysContainer: {
+    flexDirection: 'row',
+    gap: 4,
   },
   dayItem: {
+    flex: 1,
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 2,
+    borderRadius: 10,
     backgroundColor: '#f9fafb',
-    minWidth: 70,
   },
   dayItemSelected: {
     backgroundColor: '#5A31F4',
@@ -126,31 +153,22 @@ const styles = StyleSheet.create({
     borderColor: '#5A31F4',
   },
   dayName: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6b7280',
     fontWeight: '500',
-    marginBottom: 4,
+    marginBottom: 2,
     textTransform: 'capitalize',
   },
   dayNameSelected: {
     color: '#ffffff',
   },
   dayNumber: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#111827',
-    marginBottom: 2,
   },
   dayNumberSelected: {
     color: '#ffffff',
-  },
-  monthName: {
-    fontSize: 11,
-    color: '#9ca3af',
-    textTransform: 'capitalize',
-  },
-  monthNameSelected: {
-    color: '#e9d5ff',
   },
   todayIndicator: {
     position: 'absolute',

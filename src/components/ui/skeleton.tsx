@@ -58,8 +58,8 @@ export function Skeleton({
       style={[
         styles.skeleton,
         {
-          width,
-          height,
+          width: typeof width === 'number' ? width : undefined,
+          height: typeof height === 'number' ? height : undefined,
           borderRadius,
           opacity: animate ? opacity : 0.3,
         },

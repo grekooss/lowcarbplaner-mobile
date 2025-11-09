@@ -3,173 +3,130 @@
  *
  * Karta pojedynczego dnia w widoku tygodniowym:
  * - Wyświetlanie daty i dnia tygodnia
- * - Podsumowanie makro (consumed/target)
- * - Lista mini meal cards (kompaktowy widok posiłków)
- * - Status dnia (czy wszystkie posiłki zjedzone)
+ * - Lista 3 posiłków (śniadanie, obiad, kolacja)
+ * - Możliwość wymiany przepisów
+ * - Badge "Dziś" dla bieżącego dnia
  */
 
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-import { format, isToday } from 'date-fns'
-import { pl } from 'date-fns/locale'
+import { useState } from 'react'
+import { View, Text, StyleSheet } from 'react-native'
+import type { DayPlanViewModel } from '@/src/types/planned-meal.types'
+import { MiniMealCard } from './mini-meal-card'
+import { SwapMealSheet } from './swap-meal-sheet'
+import { RecipePreviewSheet } from './recipe-preview-sheet'
 import type { PlannedMealDTO } from '@src/types/dto.types'
 
 interface DayCardProps {
-  date: Date
-  meals: PlannedMealDTO[]
-  targetCalories: number
-  onDayPress?: (date: Date) => void
+  day: DayPlanViewModel
+  onDayPress?: (date: string) => void
 }
 
 /**
  * Karta pojedynczego dnia w tygodniowym planie
  */
-export function DayCard({
-  date,
-  meals,
-  targetCalories,
-  onDayPress,
-}: DayCardProps) {
-  const isTodayFlag = isToday(date)
-  const dayName = format(date, 'EEEE', { locale: pl })
-  const dayNumber = format(date, 'd')
-  const monthName = format(date, 'MMM', { locale: pl })
+export function DayCard({ day }: DayCardProps) {
+  const [selectedMeal, setSelectedMeal] = useState<PlannedMealDTO | null>(null)
+  const [swapMeal, setSwapMeal] = useState<PlannedMealDTO | null>(null)
 
-  // Oblicz consumed macros
-  const consumed = {
-    calories: meals.reduce((sum, m) => sum + (m.recipe.total_calories || 0), 0),
-    protein: meals.reduce((sum, m) => sum + (m.recipe.total_protein_g || 0), 0),
-    carbs: meals.reduce((sum, m) => sum + (m.recipe.total_carbs_g || 0), 0),
-    fats: meals.reduce((sum, m) => sum + (m.recipe.total_fats_g || 0), 0),
+  const handleMealPress = (meal: PlannedMealDTO) => {
+    setSelectedMeal(meal)
   }
 
-  // Sprawdź status dnia
-  const allMealsEaten = meals.length > 0 && meals.every((m) => m.is_eaten)
-  const someMealsEaten = meals.some((m) => m.is_eaten)
-  const calorieProgress =
-    targetCalories > 0 ? (consumed.calories / targetCalories) * 100 : 0
-
-  const handlePress = () => {
-    onDayPress?.(date)
+  const handleSwapPress = (meal: PlannedMealDTO) => {
+    setSwapMeal(meal)
   }
+
+  const meals = [day.breakfast, day.lunch, day.dinner].filter(
+    Boolean
+  ) as PlannedMealDTO[]
+  const hasMeals = meals.length > 0
 
   return (
-    <TouchableOpacity
-      style={[styles.container, isTodayFlag && styles.containerToday]}
-      onPress={handlePress}
-      activeOpacity={0.8}
-      accessibilityLabel={`${dayName} ${dayNumber} ${monthName}`}
-    >
-      {/* Header - data i status */}
-      <View style={styles.header}>
-        <View>
-          <Text style={[styles.dayName, isTodayFlag && styles.dayNameToday]}>
-            {dayName}
-          </Text>
-          <Text style={[styles.date, isTodayFlag && styles.dateToday]}>
-            {dayNumber} {monthName}
-          </Text>
+    <>
+      <View style={[styles.container, day.isToday && styles.containerToday]}>
+        {/* Header - data i badge */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.dayName, day.isToday && styles.dayNameToday]}>
+              {day.dayName}
+            </Text>
+            <Text style={[styles.date, day.isToday && styles.dateToday]}>
+              {day.dayNumber}
+            </Text>
+          </View>
+
+          {/* Badge "Dziś" */}
+          {day.isToday && (
+            <View style={styles.todayBadge}>
+              <Text style={styles.todayBadgeText}>Dziś</Text>
+            </View>
+          )}
         </View>
 
-        {/* Status indicator */}
-        {meals.length > 0 && (
-          <View
-            style={[
-              styles.statusDot,
-              allMealsEaten && styles.statusDotComplete,
-              someMealsEaten && !allMealsEaten && styles.statusDotPartial,
-            ]}
-          />
+        {/* Meals */}
+        {hasMeals ? (
+          <View style={styles.mealsContainer}>
+            {day.breakfast && (
+              <MiniMealCard
+                meal={day.breakfast}
+                onPress={() => handleMealPress(day.breakfast!)}
+                onSwapPress={() => handleSwapPress(day.breakfast!)}
+                canSwap={!day.isPast}
+              />
+            )}
+            {day.lunch && (
+              <MiniMealCard
+                meal={day.lunch}
+                onPress={() => handleMealPress(day.lunch!)}
+                onSwapPress={() => handleSwapPress(day.lunch!)}
+                canSwap={!day.isPast}
+              />
+            )}
+            {day.dinner && (
+              <MiniMealCard
+                meal={day.dinner}
+                onPress={() => handleMealPress(day.dinner!)}
+                onSwapPress={() => handleSwapPress(day.dinner!)}
+                canSwap={!day.isPast}
+              />
+            )}
+          </View>
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>Brak posiłków</Text>
+          </View>
         )}
       </View>
 
-      {/* Podsumowanie kalorii */}
-      {meals.length > 0 ? (
-        <View style={styles.caloriesSection}>
-          <Text style={styles.caloriesValue}>
-            {Math.round(consumed.calories)}
-            <Text style={styles.caloriesTarget}>
-              {' '}
-              / {Math.round(targetCalories)}
-            </Text>
-          </Text>
-          <Text style={styles.caloriesLabel}>kcal</Text>
-
-          {/* Progress bar */}
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${Math.min(calorieProgress, 100)}%`,
-                  backgroundColor:
-                    calorieProgress > 110
-                      ? '#ef4444'
-                      : calorieProgress > 90
-                        ? '#10b981'
-                        : '#6b7280',
-                },
-              ]}
-            />
-          </View>
-        </View>
-      ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>Brak posiłków</Text>
-        </View>
+      {/* Recipe Preview Sheet */}
+      {selectedMeal && (
+        <RecipePreviewSheet
+          meal={selectedMeal}
+          visible={!!selectedMeal}
+          onClose={() => setSelectedMeal(null)}
+        />
       )}
 
-      {/* Mini podsumowanie makro */}
-      {meals.length > 0 && (
-        <View style={styles.macrosRow}>
-          <MacroItem
-            value={Math.round(consumed.protein)}
-            label='B'
-            color='#10b981'
-          />
-          <MacroItem
-            value={Math.round(consumed.carbs)}
-            label='W'
-            color='#f59e0b'
-          />
-          <MacroItem
-            value={Math.round(consumed.fats)}
-            label='T'
-            color='#ef4444'
-          />
-        </View>
+      {/* Swap Meal Sheet */}
+      {swapMeal && (
+        <SwapMealSheet
+          meal={swapMeal}
+          visible={!!swapMeal}
+          onClose={() => setSwapMeal(null)}
+        />
       )}
-    </TouchableOpacity>
-  )
-}
-
-/**
- * Mini makro item (kompaktowy)
- */
-function MacroItem({
-  value,
-  label,
-  color,
-}: {
-  value: number
-  label: string
-  color: string
-}) {
-  return (
-    <View style={styles.macroItem}>
-      <Text style={[styles.macroValue, { color }]}>{value}g</Text>
-      <Text style={styles.macroLabel}>{label}</Text>
-    </View>
+    </>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+    backgroundColor: '#F5EFE7',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: '#E5E7EB',
   },
   containerToday: {
     borderColor: '#5A31F4',
@@ -178,95 +135,51 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
   },
   dayName: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#6b7280',
-    textTransform: 'capitalize',
+    color: '#6B7280',
   },
   dayNameToday: {
     color: '#5A31F4',
   },
   date: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginTop: 2,
-    textTransform: 'capitalize',
-  },
-  dateToday: {
-    color: '#5A31F4',
-  },
-  statusDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#e5e7eb',
-  },
-  statusDotPartial: {
-    backgroundColor: '#f59e0b',
-  },
-  statusDotComplete: {
-    backgroundColor: '#10b981',
-  },
-  caloriesSection: {
-    marginBottom: 12,
-  },
-  caloriesValue: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#111827',
   },
-  caloriesTarget: {
-    fontSize: 14,
-    fontWeight: 'normal',
-    color: '#6b7280',
+  dateToday: {
+    color: '#5A31F4',
   },
-  caloriesLabel: {
+  todayBadge: {
+    backgroundColor: '#5A31F4',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  todayBadgeText: {
+    color: '#FFFFFF',
     fontSize: 12,
-    color: '#9ca3af',
-    marginTop: 2,
+    fontWeight: '600',
   },
-  progressBar: {
-    height: 4,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 2,
-    marginTop: 8,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
+  mealsContainer: {
+    gap: 12,
   },
   emptyState: {
-    paddingVertical: 16,
+    paddingVertical: 32,
     alignItems: 'center',
   },
   emptyText: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: '#9CA3AF',
     fontStyle: 'italic',
-  },
-  macrosRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
-  },
-  macroItem: {
-    alignItems: 'center',
-  },
-  macroValue: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  macroLabel: {
-    fontSize: 11,
-    color: '#9ca3af',
-    marginTop: 2,
   },
 })

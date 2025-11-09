@@ -5,6 +5,7 @@
 import React, { useEffect, useRef } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
+import { useRouter } from 'expo-router'
 import { useAuth } from '@src/hooks/useAuth'
 import { useAuthModalStore } from '@src/stores/use-auth-modal-store'
 
@@ -50,9 +51,10 @@ export function ProtectedScreen({
   placeholder,
   showSignup = false,
 }: ProtectedScreenProps) {
-  const { user } = useAuth()
+  const { user, isInitializing } = useAuth()
   const { showAuthModal } = useAuthModalStore()
   const isFocused = useIsFocused()
+  const router = useRouter()
   const hasShownModal = useRef(false)
 
   const isAuthenticated = !!user
@@ -67,13 +69,29 @@ export function ProtectedScreen({
   useEffect(() => {
     // Pokazuj modal tylko gdy:
     // 1. Ekran jest aktywny (focused)
-    // 2. Użytkownik nie jest zalogowany
-    // 3. Modal nie był jeszcze pokazany dla tego focusu
-    if (isFocused && !isAuthenticated && !hasShownModal.current) {
+    // 2. Inicjalizacja auth zakończona (nie sprawdzamy już sesji)
+    // 3. Użytkownik nie jest zalogowany
+    // 4. Modal nie był jeszcze pokazany dla tego focusu
+    if (
+      isFocused &&
+      !isInitializing &&
+      !isAuthenticated &&
+      !hasShownModal.current
+    ) {
       hasShownModal.current = true
-      showAuthModal(showSignup ? 'signup' : 'signin')
+      // Przekaż callback przekierowujący na stronę przepisów po zamknięciu modala
+      showAuthModal(showSignup ? 'signup' : 'signin', () => {
+        router.replace('/(tabs)/recipes' as any)
+      })
     }
-  }, [isFocused, isAuthenticated, showSignup, showAuthModal])
+  }, [
+    isFocused,
+    isInitializing,
+    isAuthenticated,
+    showSignup,
+    showAuthModal,
+    router,
+  ])
 
   // Jeśli użytkownik zalogowany, pokaż pełną zawartość
   if (isAuthenticated) {

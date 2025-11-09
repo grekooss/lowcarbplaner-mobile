@@ -88,7 +88,10 @@ export default function DashboardScreen() {
   return (
     <ProtectedScreen
       placeholder={
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+          style={styles.container}
+          edges={['left', 'right', 'bottom']}
+        >
           <View style={styles.placeholderContainer}>
             <Text style={styles.placeholderTitle}>Dashboard</Text>
             <Text style={styles.placeholderMessage}>
@@ -98,7 +101,7 @@ export default function DashboardScreen() {
         </SafeAreaView>
       }
     >
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -106,14 +109,6 @@ export default function DashboardScreen() {
             <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
           }
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Dashboard</Text>
-            <Text style={styles.headerSubtitle}>
-              {format(selectedDate, 'd MMMM yyyy')}
-            </Text>
-          </View>
-
           {/* Calendar Strip - wybór dnia */}
           <View style={styles.section}>
             <CalendarStrip
@@ -164,19 +159,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#6b7280',
+    paddingBottom: 150, // Tab bar (70px) + Ad (60px) + extra spacing
   },
   section: {
     marginBottom: 24,

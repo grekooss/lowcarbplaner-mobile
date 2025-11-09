@@ -6,11 +6,10 @@
  * - Nazwa i kategoria
  * - Makro (kalorie, białko, węgle, tłuszcze)
  * - Czas przygotowania
- * - Badge "Low Carb" jeśli < 20g węgli
  * - Animacje wejścia i interakcji
  */
 
-import { View, Text, StyleSheet, Image } from 'react-native'
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -22,9 +21,7 @@ import type { Tables } from '@src/types/database.types'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { hapticLight } from '@src/utils/haptics'
 
-const AnimatedPressable = Animated.createAnimatedComponent(
-  require('react-native').TouchableOpacity
-)
+const AnimatedPressable = Animated.createAnimatedComponent(TouchableOpacity)
 
 interface RecipeCardProps {
   recipe: Tables<'recipes'>
@@ -36,7 +33,6 @@ interface RecipeCardProps {
  * Karta przepisu na liście z animacjami
  */
 export function RecipeCard({ recipe, onPress, index = 0 }: RecipeCardProps) {
-  const isLowCarb = (recipe.total_carbs_g || 0) < 20
   const scale = useSharedValue(1)
   const shadowOpacity = useSharedValue(0.1)
 
@@ -70,7 +66,7 @@ export function RecipeCard({ recipe, onPress, index = 0 }: RecipeCardProps) {
   return (
     <Animated.View entering={entering} style={styles.container}>
       <AnimatedPressable
-        style={animatedStyle}
+        style={[styles.pressableContainer, animatedStyle] as any}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         onPress={handlePress}
@@ -90,24 +86,10 @@ export function RecipeCard({ recipe, onPress, index = 0 }: RecipeCardProps) {
               <IconSymbol name='fork.knife' size={32} color='#9ca3af' />
             </View>
           )}
-
-          {/* Low Carb Badge */}
-          {isLowCarb && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>Low Carb</Text>
-            </View>
-          )}
         </View>
 
         {/* Info sekcja */}
         <View style={styles.info}>
-          {/* Kategoria */}
-          {recipe.category && (
-            <Text style={styles.category} numberOfLines={1}>
-              {recipe.category}
-            </Text>
-          )}
-
           {/* Nazwa przepisu */}
           <Text style={styles.name} numberOfLines={2}>
             {recipe.name}
@@ -115,41 +97,31 @@ export function RecipeCard({ recipe, onPress, index = 0 }: RecipeCardProps) {
 
           {/* Makro */}
           <View style={styles.macros}>
-            <MacroItem
-              icon='flame'
+            <MacroCard
+              icon='flame.fill'
               value={Math.round(recipe.total_calories || 0)}
               unit='kcal'
-              color='#111827'
+              backgroundColor='#f3f4f6'
             />
-            <MacroItem
-              icon='figure.strengthtraining.traditional'
-              value={Math.round(recipe.total_protein_g || 0)}
-              unit='B'
-              color='#10b981'
-            />
-            <MacroItem
-              icon='leaf'
-              value={Math.round(recipe.total_carbs_g || 0)}
-              unit='W'
-              color='#f59e0b'
-            />
-            <MacroItem
-              icon='drop'
+            <MacroCard
+              icon='drop.fill'
               value={Math.round(recipe.total_fats_g || 0)}
-              unit='T'
-              color='#ef4444'
+              unit='g'
+              backgroundColor='#dcfce7'
+            />
+            <MacroCard
+              icon='leaf.fill'
+              value={Math.round(recipe.total_carbs_g || 0)}
+              unit='g'
+              backgroundColor='#fef9c3'
+            />
+            <MacroCard
+              icon='scalemass.fill'
+              value={Math.round(recipe.total_protein_g || 0)}
+              unit='g'
+              backgroundColor='#fed7aa'
             />
           </View>
-
-          {/* Czas przygotowania */}
-          {recipe.preparation_time_minutes && (
-            <View style={styles.timeRow}>
-              <IconSymbol name='clock' size={14} color='#6b7280' />
-              <Text style={styles.timeText}>
-                {recipe.preparation_time_minutes} min
-              </Text>
-            </View>
-          )}
         </View>
       </AnimatedPressable>
     </Animated.View>
@@ -157,25 +129,26 @@ export function RecipeCard({ recipe, onPress, index = 0 }: RecipeCardProps) {
 }
 
 /**
- * Mini makro item z ikoną
+ * Kolorowa karta makroskładnika
  */
-function MacroItem({
+function MacroCard({
   icon,
   value,
   unit,
-  color,
+  backgroundColor,
 }: {
   icon: string
   value: number
   unit: string
-  color: string
+  backgroundColor: string
 }) {
   return (
-    <View style={styles.macroItem}>
-      <IconSymbol name={icon} size={14} color={color} />
-      <Text style={[styles.macroValue, { color }]}>
-        {value}
-        <Text style={styles.macroUnit}> {unit}</Text>
+    <View style={[styles.macroCard, { backgroundColor }]}>
+      <View style={styles.macroIconContainer}>
+        <IconSymbol name={icon as any} size={20} color='#1f2937' />
+      </View>
+      <Text style={styles.macroValue}>
+        {value} <Text style={styles.macroUnit}>{unit}</Text>
       </Text>
     </View>
   )
@@ -193,6 +166,9 @@ const styles = StyleSheet.create({
     elevation: 3,
     overflow: 'hidden',
   },
+  pressableContainer: {
+    width: '100%',
+  },
   imageContainer: {
     position: 'relative',
     width: '100%',
@@ -206,20 +182,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  badge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: '#10b981',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#ffffff',
   },
   info: {
     padding: 12,
@@ -240,25 +202,32 @@ const styles = StyleSheet.create({
   },
   macros: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    gap: 8,
+    marginTop: 8,
   },
-  macroItem: {
-    flexDirection: 'row',
+  macroCard: {
+    flex: 1,
+    borderRadius: 8,
+    padding: 8,
     alignItems: 'center',
-    gap: 4,
+  },
+  macroIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
   macroValue: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1f2937',
   },
   macroUnit: {
     fontSize: 11,
-    fontWeight: 'normal',
+    fontWeight: '600',
     color: '#6b7280',
   },
   timeRow: {

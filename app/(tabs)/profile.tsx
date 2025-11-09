@@ -101,7 +101,10 @@ export default function ProfileScreen() {
   return (
     <ProtectedScreen
       placeholder={
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+          style={styles.container}
+          edges={['left', 'right', 'bottom']}
+        >
           <View style={styles.placeholderContainer}>
             <Text style={styles.placeholderTitle}>Profil</Text>
             <Text style={styles.placeholderMessage}>
@@ -112,13 +115,19 @@ export default function ProfileScreen() {
       }
     >
       {isLoading || !profile ? (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+          style={styles.container}
+          edges={['left', 'right', 'bottom']}
+        >
           <View style={styles.loadingContainer}>
             <ActivityIndicator size='large' color='#5A31F4' />
           </View>
         </SafeAreaView>
       ) : (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+          style={styles.container}
+          edges={['left', 'right', 'bottom']}
+        >
           <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
@@ -129,14 +138,6 @@ export default function ProfileScreen() {
               />
             }
           >
-            {/* Header */}
-            <View style={styles.header}>
-              <Text style={styles.headerTitle}>Profil</Text>
-              <Text style={styles.headerSubtitle}>
-                {user?.email || 'Zarządzaj swoim profilem'}
-              </Text>
-            </View>
-
             {/* Macro Targets Card */}
             <View style={styles.section}>
               <MacroTargetsCard
@@ -211,19 +212,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#6b7280',
   },
   section: {
     marginBottom: 16,

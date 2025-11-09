@@ -37,22 +37,21 @@ export function ProfileForm({
   onSave,
   isSaving,
 }: ProfileFormProps) {
-  const [fullName, setFullName] = useState(profile.full_name || '')
+  const [fullName, setFullName] = useState('')
   const [weight, setWeight] = useState(profile.weight_kg?.toString() || '')
   const [height, setHeight] = useState(profile.height_cm?.toString() || '')
-  const [gender, setGender] = useState<'male' | 'female' | null>(
-    profile.gender as 'male' | 'female' | null
+  const [gender, setGender] = useState<'male' | 'female' | undefined>(
+    profile.gender || undefined
   )
-  const [activityLevel, setActivityLevel] = useState<
-    'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'
-  >((profile.activity_level as any) || 'moderate')
+  const [activityLevel, setActivityLevel] = useState(
+    profile.activity_level || 'moderate'
+  )
 
   const handleSave = () => {
     hapticMedium()
     onSave({
-      full_name: fullName || null,
-      weight_kg: weight ? parseFloat(weight) : null,
-      height_cm: height ? parseFloat(height) : null,
+      weight_kg: weight ? parseFloat(weight) : profile.weight_kg,
+      height_cm: height ? parseFloat(height) : profile.height_cm,
       gender: gender,
       activity_level: activityLevel,
     })
@@ -64,14 +63,13 @@ export function ProfileForm({
   }
 
   const handleActivityChange = (
-    level: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'
+    level: 'very_low' | 'low' | 'moderate' | 'high' | 'very_high'
   ) => {
     hapticSelection()
     setActivityLevel(level)
   }
 
   const hasChanges =
-    fullName !== (profile.full_name || '') ||
     weight !== (profile.weight_kg?.toString() || '') ||
     height !== (profile.height_cm?.toString() || '') ||
     gender !== profile.gender ||
@@ -236,28 +234,28 @@ export function ProfileForm({
 
 const ACTIVITY_OPTIONS = [
   {
-    value: 'sedentary' as const,
-    label: 'Siedzący tryb życia',
+    value: 'very_low' as const,
+    label: 'Bardzo niska',
     description: 'Brak aktywności fizycznej',
   },
   {
-    value: 'light' as const,
-    label: 'Lekka aktywność',
+    value: 'low' as const,
+    label: 'Niska',
     description: '1-3 treningi tygodniowo',
   },
   {
     value: 'moderate' as const,
-    label: 'Umiarkowana aktywność',
+    label: 'Umiarkowana',
     description: '3-5 treningów tygodniowo',
   },
   {
-    value: 'active' as const,
-    label: 'Aktywny',
+    value: 'high' as const,
+    label: 'Wysoka',
     description: '6-7 treningów tygodniowo',
   },
   {
-    value: 'very_active' as const,
-    label: 'Bardzo aktywny',
+    value: 'very_high' as const,
+    label: 'Bardzo wysoka',
     description: 'Intensywne treningi codziennie',
   },
 ]

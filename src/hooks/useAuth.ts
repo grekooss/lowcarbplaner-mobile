@@ -11,7 +11,6 @@ import Toast from 'react-native-toast-message'
 import { supabase } from '@src/lib/supabase/client'
 import { translateAuthError } from '@src/lib/utils/auth-errors'
 import type { UseAuthReturn } from '@src/types/auth-view.types'
-import type { User } from '@supabase/supabase-js'
 
 /**
  * Hook do zarządzania autentykacją użytkownika w React Native
@@ -35,6 +34,7 @@ export function useAuth(redirectTo?: string): UseAuthReturn {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<{ id: string; email: string } | null>(null)
+  const [isInitializing, setIsInitializing] = useState(true)
 
   // Listen for auth changes
   useEffect(() => {
@@ -46,6 +46,7 @@ export function useAuth(redirectTo?: string): UseAuthReturn {
           email: session.user.email || '',
         })
       }
+      setIsInitializing(false)
     })
 
     // Listen for auth changes
@@ -92,9 +93,9 @@ export function useAuth(redirectTo?: string): UseAuthReturn {
 
         // Przekieruj odpowiednio
         if (!profile?.disclaimer_accepted_at) {
-          router.replace('/onboarding')
+          router.replace('/onboarding' as any)
         } else {
-          router.replace(redirectTo || '/(app)')
+          router.replace((redirectTo || '/(app)') as any)
         }
 
         Toast.show({
@@ -304,6 +305,7 @@ export function useAuth(redirectTo?: string): UseAuthReturn {
     isLoading,
     error,
     user,
+    isInitializing,
     login,
     register,
     loginWithGoogle,

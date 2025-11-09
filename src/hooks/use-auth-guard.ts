@@ -2,7 +2,6 @@
  * Hook do ochrony ekranów przed nieautoryzowanym dostępem
  * Pokazuje modal logowania dla niezalogowanych użytkowników
  */
-import { useEffect } from 'react'
 import { useAuthModalStore } from '@src/stores/use-auth-modal-store'
 import { useAuth } from './useAuth'
 

@@ -16,6 +16,8 @@ module.exports = [
       'metro.config.js',
       'jest.config.js',
       'jest.setup.js',
+      'MATCHTI/*',
+      'WEB/*',
     ],
   },
 ]

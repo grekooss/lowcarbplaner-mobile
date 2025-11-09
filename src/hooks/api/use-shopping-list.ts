@@ -160,8 +160,6 @@ export function useTogglePurchased() {
     mutationFn: async ({
       ingredientId,
       isPurchased,
-      startDate,
-      endDate,
     }: {
       ingredientId: number
       isPurchased: boolean
@@ -202,7 +200,7 @@ export function useTogglePurchased() {
 
       return { previousData }
     },
-    onError: (err, variables, context) => {
+    onError: (_err, variables, context) => {
       // Rollback on error
       if (context?.previousData) {
         queryClient.setQueryData(
@@ -226,17 +224,11 @@ export function useClearPurchased() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({
-      startDate,
-      endDate,
-    }: {
-      startDate: string
-      endDate: string
-    }) => {
+    mutationFn: async (_params: { startDate: string; endDate: string }) => {
       // TODO: Wyczyść stan w AsyncStorage lub Supabase
       return { cleared: true }
     },
-    onSuccess: (data, { startDate, endDate }) => {
+    onSuccess: (_data, { startDate, endDate }) => {
       // Reset all purchased flags
       queryClient.setQueryData<ShoppingListByCategory[]>(
         shoppingListKeys.byDateRange(startDate, endDate),

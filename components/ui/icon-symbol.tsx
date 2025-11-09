@@ -21,6 +21,14 @@ const MAPPING = {
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
+  'flame.fill': 'local-fire-department',
+  'drop.fill': 'water-drop',
+  'leaf.fill': 'eco',
+  'scalemass.fill': 'fitness-center',
+  'fork.knife': 'restaurant',
+  cart: 'shopping-cart',
+  sparkles: 'auto-awesome',
+  'rectangle.portrait.and.arrow.right': 'exit-to-app',
 } as IconMapping
 
 /**

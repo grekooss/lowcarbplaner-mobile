@@ -136,7 +136,7 @@ export function useRecipeDetails(recipeId: number) {
         throw new Error(`Error fetching recipe details: ${error.message}`)
       }
 
-      return data as RecipeWithDetails
+      return data as unknown as RecipeWithDetails
     },
     enabled: !!recipeId,
     staleTime: 15 * 60 * 1000, // 15 minut
@@ -150,20 +150,8 @@ export function useRecipeCategories() {
   return useQuery({
     queryKey: recipesKeys.categories(),
     queryFn: async (): Promise<string[]> => {
-      const { data, error } = await supabase
-        .from('recipes')
-        .select('category')
-        .not('category', 'is', null)
-
-      if (error) {
-        throw new Error(`Error fetching categories: ${error.message}`)
-      }
-
-      // Zwróć unikalne kategorie
-      const uniqueCategories = [
-        ...new Set(data.map((r) => r.category).filter(Boolean)),
-      ]
-      return uniqueCategories as string[]
+      // Zwróć puste kategorie (brak pola category w recipes table)
+      return []
     },
     staleTime: 60 * 60 * 1000, // 1 godzina (kategorie się rzadko zmieniają)
   })
@@ -211,7 +199,7 @@ export function useInfiniteRecipes(filters: RecipeFilters = {}, pageSize = 20) {
       return data || []
     },
     initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages, lastPageParam) => {
+    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
       if (lastPage.length < pageSize) {
         return undefined // Brak więcej danych
       }

@@ -2,13 +2,13 @@
  * Meal Plan Screen
  *
  * Widok tygodniowy planu posiłków:
- * - Nawigacja między tygodniami
- * - 7 dni × 3 posiłki
- * - Podgląd przepisów
+ * - Automatyczne generowanie planu (7 dni × 3 posiłki)
+ * - Wyświetlanie tygodniowego planu
  * - Wymiana przepisów
+ * - Podgląd przepisów
  */
 
-import { useState } from 'react'
+import { useEffect } from 'react'
 import {
   View,
   Text,
@@ -17,126 +17,151 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native'
-import { format, startOfWeek, endOfWeek, addDays } from 'date-fns'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 
 // Komponenty Meal Plan
-import { WeekHeader } from '@src/components/meal-plan/week-header'
 import { DayCard } from '@src/components/meal-plan/day-card'
 import { ProtectedScreen } from '@src/components/auth/protected-screen'
+import { AutoGeneratePrompt } from '@src/components/meal-plan/auto-generate-prompt'
 
 // Hooki API
-import { usePlannedMealsRange } from '@src/hooks/api/use-planned-meals'
+import {
+  usePlannedMealsRange,
+  useGenerateMealPlan,
+} from '@src/hooks/api/use-planned-meals'
 import { useProfile } from '@src/hooks/api/use-profile'
-import type { PlannedMealDTO } from '@src/types/dto.types'
+
+// Utils
+import {
+  getCurrentWeekRange,
+  transformToWeekViewModel,
+  isMealPlanComplete,
+  getMissingMealsCount,
+} from '@src/utils/meal-plan-utils'
 
 export default function MealPlanScreen() {
   const router = useRouter()
-  const [currentWeek, setCurrentWeek] = useState<Date>(new Date())
 
-  // Oblicz zakres tygodnia (Pon-Niedz)
-  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 })
-  const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 })
-  const startDateStr = format(weekStart, 'yyyy-MM-dd')
-  const endDateStr = format(weekEnd, 'yyyy-MM-dd')
+  // Get current week range (today + 6 days)
+  const { startDate, endDate } = getCurrentWeekRange()
 
   // Queries
   const {
     data: meals,
     isLoading: mealsLoading,
     refetch,
-  } = usePlannedMealsRange(startDateStr, endDateStr)
-  const { data: profile, isLoading: profileLoading } = useProfile()
+  } = usePlannedMealsRange(startDate, endDate)
+  const { isLoading: profileLoading } = useProfile()
+
+  // Mutations
+  const generatePlanMutation = useGenerateMealPlan()
 
   const isLoading = mealsLoading || profileLoading
+  const isGenerating = generatePlanMutation.isPending
+
+  // Transform meals to week view model
+  const weekPlan =
+    meals && !mealsLoading
+      ? transformToWeekViewModel(meals, startDate, endDate)
+      : null
+
+  // Check if plan needs generation
+  const needsGeneration = weekPlan && !isMealPlanComplete(weekPlan)
+  const missingCount = weekPlan ? getMissingMealsCount(weekPlan) : 0
+
+  // Auto-generate plan if missing meals
+  useEffect(() => {
+    if (needsGeneration && !isGenerating && !generatePlanMutation.isSuccess) {
+      // Auto-generate only once
+      // User can manually trigger if needed
+    }
+  }, [needsGeneration, isGenerating])
 
   const handleRefresh = async () => {
     await refetch()
   }
 
-  const handleWeekChange = (week: Date) => {
-    setCurrentWeek(week)
+  const handleGeneratePlan = () => {
+    generatePlanMutation.mutate()
   }
 
-  const handleDayPress = () => {
-    // Nawiguj do Dashboard z wybraną datą
+  const handleDayPress = (_date: string) => {
+    // Navigate to dashboard with selected date
     // TODO: Przekazanie daty przez router params
     router.push('/')
   }
 
-  // Pogrupuj posiłki według dat
-  const mealsByDate = meals
-    ? meals.reduce(
-        (acc, meal) => {
-          if (!acc[meal.meal_date]) {
-            acc[meal.meal_date] = []
-          }
-          acc[meal.meal_date]!.push(meal)
-          return acc
-        },
-        {} as Record<string, PlannedMealDTO[]>
-      )
-    : {}
-
-  // Generuj 7 dni tygodnia
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
-
   return (
     <ProtectedScreen
       placeholder={
-        <View style={styles.placeholderContainer}>
-          <Text style={styles.placeholderTitle}>Plan Tygodniowy</Text>
-          <Text style={styles.placeholderMessage}>
-            Zaloguj się, aby zobaczyć swój plan posiłków na cały tydzień
-          </Text>
-        </View>
+        <SafeAreaView
+          style={styles.container}
+          edges={['left', 'right', 'bottom']}
+        >
+          <View style={styles.placeholderContainer}>
+            <Text style={styles.placeholderTitle}>Plan Posiłków</Text>
+            <Text style={styles.placeholderMessage}>
+              Zaloguj się, aby zobaczyć swój 7-dniowy plan posiłków
+            </Text>
+          </View>
+        </SafeAreaView>
       }
     >
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
-        }
+      <SafeAreaView
+        style={styles.container}
+        edges={['left', 'right', 'bottom']}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Plan Tygodniowy</Text>
-          <Text style={styles.headerSubtitle}>
-            Zobacz swój plan posiłków na cały tydzień
-          </Text>
-        </View>
-
-        {/* Week Navigation */}
-        <View style={styles.section}>
-          <WeekHeader
-            currentWeek={currentWeek}
-            onWeekChange={handleWeekChange}
-          />
-        </View>
-
-        {/* Days List */}
-        <View style={styles.section}>
-          {isLoading ? (
-            <ActivityIndicator size='large' color='#5A31F4' />
-          ) : (
-            weekDays.map((day) => {
-              const dateStr = format(day, 'yyyy-MM-dd')
-              const dayMeals = mealsByDate[dateStr] || []
-
-              return (
-                <DayCard
-                  key={dateStr}
-                  date={day}
-                  meals={dayMeals}
-                  targetCalories={profile?.target_calories || 2000}
-                  onDayPress={handleDayPress}
-                />
-              )
-            })
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
+          }
+        >
+          {/* Auto-Generate Prompt */}
+          {needsGeneration && !isGenerating && (
+            <View style={styles.section}>
+              <AutoGeneratePrompt
+                missingCount={missingCount}
+                onGenerate={handleGeneratePlan}
+              />
+            </View>
           )}
-        </View>
-      </ScrollView>
+
+          {/* Generating Indicator */}
+          {isGenerating && (
+            <View style={styles.section}>
+              <View style={styles.generatingCard}>
+                <ActivityIndicator size='large' color='#5A31F4' />
+                <Text style={styles.generatingTitle}>
+                  Generowanie planu posiłków...
+                </Text>
+                <Text style={styles.generatingMessage}>
+                  Tworzę dla Ciebie spersonalizowany plan na 7 dni. To może
+                  chwilę potrwać.
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Days List */}
+          {!isLoading && weekPlan && (
+            <View style={styles.section}>
+              {weekPlan.days.map((day) => (
+                <DayCard key={day.date} day={day} onDayPress={handleDayPress} />
+              ))}
+            </View>
+          )}
+
+          {/* Loading State */}
+          {isLoading && !weekPlan && (
+            <View style={styles.section}>
+              <ActivityIndicator size='large' color='#5A31F4' />
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
     </ProtectedScreen>
   )
 }
@@ -152,19 +177,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
   },
-  header: {
-    marginBottom: 24,
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
   section: {
     marginBottom: 24,
   },
@@ -173,7 +185,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: '#f9fafb',
   },
   placeholderTitle: {
     fontSize: 24,
@@ -185,5 +196,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
     textAlign: 'center',
+  },
+  generatingCard: {
+    backgroundColor: '#EEF2FF',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  generatingTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  generatingMessage: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 })

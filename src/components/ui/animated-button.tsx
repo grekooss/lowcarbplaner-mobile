@@ -92,7 +92,7 @@ export function AnimatedButton({
       <View style={styles.content}>
         {icon && iconPosition === 'left' && (
           <IconSymbol
-            name={icon}
+            name={icon as any}
             size={sizeIconMap[size]}
             color={getIconColor(variant, disabled || loading)}
           />
@@ -109,7 +109,7 @@ export function AnimatedButton({
         </Text>
         {icon && iconPosition === 'right' && (
           <IconSymbol
-            name={icon}
+            name={icon as any}
             size={sizeIconMap[size]}
             color={getIconColor(variant, disabled || loading)}
           />

@@ -15,7 +15,9 @@ import { IconSymbol } from '@/components/ui/icon-symbol'
 
 interface MiniMealCardProps {
   meal: PlannedMealDTO
-  onPress?: (mealId: number) => void
+  onPress?: () => void
+  onSwapPress?: () => void
+  canSwap?: boolean
 }
 
 const MEAL_TYPE_CONFIG = {
@@ -27,12 +29,22 @@ const MEAL_TYPE_CONFIG = {
 /**
  * Kompaktowa karta posiłku do widoku tygodniowego
  */
-export function MiniMealCard({ meal, onPress }: MiniMealCardProps) {
+export function MiniMealCard({
+  meal,
+  onPress,
+  onSwapPress,
+  canSwap = true,
+}: MiniMealCardProps) {
   const { recipe } = meal
   const config = MEAL_TYPE_CONFIG[meal.meal_type]
 
   const handlePress = () => {
-    onPress?.(meal.id)
+    onPress?.()
+  }
+
+  const handleSwapPress = (e: any) => {
+    e.stopPropagation()
+    onSwapPress?.()
   }
 
   return (
@@ -107,6 +119,17 @@ export function MiniMealCard({ meal, onPress }: MiniMealCardProps) {
           />
         </View>
       </View>
+
+      {/* Swap Button */}
+      {canSwap && onSwapPress && (
+        <TouchableOpacity
+          style={styles.swapButton}
+          onPress={handleSwapPress}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <IconSymbol name='arrow.2.squarepath' size={18} color='#5A31F4' />
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   )
 }
@@ -135,11 +158,11 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 8,
+    borderRadius: 12,
+    padding: 12,
     borderWidth: 1,
     borderColor: '#e5e7eb',
+    position: 'relative',
   },
   containerEaten: {
     backgroundColor: '#f9fafb',
@@ -150,8 +173,8 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   image: {
-    width: 60,
-    height: 60,
+    width: 80,
+    height: 80,
     borderRadius: 8,
   },
   imagePlaceholder: {
@@ -163,8 +186,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    width: 60,
-    height: 60,
+    width: 80,
+    height: 80,
     borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
     alignItems: 'center',
@@ -175,17 +198,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   mealType: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#6b7280',
     fontWeight: '500',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   recipeName: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: '#111827',
-    lineHeight: 16,
-    marginBottom: 4,
+    lineHeight: 18,
+    marginBottom: 6,
   },
   recipeNameEaten: {
     color: '#6b7280',
@@ -193,7 +216,7 @@ const styles = StyleSheet.create({
   macros: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
+    gap: 6,
   },
   macroChip: {
     flexDirection: 'row',
@@ -207,5 +230,21 @@ const styles = StyleSheet.create({
   macroUnit: {
     fontSize: 10,
     color: '#9ca3af',
+  },
+  swapButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 })

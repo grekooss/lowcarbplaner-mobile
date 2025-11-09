@@ -8,25 +8,34 @@ export type AuthModalType = 'signin' | 'signup' | 'reset-password' | null
 interface AuthModalStore {
   isVisible: boolean
   modalType: AuthModalType
-  showAuthModal: (type: AuthModalType) => void
+  onCloseCallback: (() => void) | null
+  showAuthModal: (type: AuthModalType, onClose?: () => void) => void
   hideAuthModal: () => void
 }
 
-export const useAuthModalStore = create<AuthModalStore>((set) => ({
+export const useAuthModalStore = create<AuthModalStore>((set, get) => ({
   isVisible: false,
   modalType: null,
+  onCloseCallback: null,
 
-  showAuthModal: (type: AuthModalType) => {
+  showAuthModal: (type: AuthModalType, onClose?: () => void) => {
     set({
       isVisible: true,
       modalType: type,
+      onCloseCallback: onClose || null,
     })
   },
 
   hideAuthModal: () => {
+    const { onCloseCallback } = get()
     set({
       isVisible: false,
       modalType: null,
+      onCloseCallback: null,
     })
+    // Wywołaj callback po zamknięciu modala
+    if (onCloseCallback) {
+      onCloseCallback()
+    }
   },
 }))
