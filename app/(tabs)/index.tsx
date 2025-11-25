@@ -32,8 +32,11 @@ import {
   useToggleMealEaten,
 } from '@src/hooks/api/use-planned-meals'
 import { useProfile, useGeneratePlan } from '@src/hooks/api/use-profile'
+import { useAutoMealPlan } from '@src/hooks/use-auto-meal-plan'
 
 export default function DashboardScreen() {
+  // Auto-manage meal plan (cleanup + auto-generation)
+  useAutoMealPlan()
   const [selectedDate, setSelectedDate] = useState<Date>(startOfToday())
   const dateStr = format(selectedDate, 'yyyy-MM-dd')
 

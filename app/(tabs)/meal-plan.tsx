@@ -39,8 +39,11 @@ import {
   isMealPlanComplete,
   getMissingMealsCount,
 } from '@src/utils/meal-plan-utils'
+import { useAutoMealPlan } from '@src/hooks/use-auto-meal-plan'
 
 export default function MealPlanScreen() {
+  // Auto-manage meal plan (cleanup + auto-generation)
+  useAutoMealPlan()
   const router = useRouter()
 
   // Get current week range (today + 6 days)

@@ -59,6 +59,12 @@ export function ProtectedScreen({
 
   const isAuthenticated = !!user
 
+  console.log('[ProtectedScreen] User state:', {
+    user: !!user,
+    email: user?.email,
+    isAuthenticated,
+  })
+
   useEffect(() => {
     // Resetuj flagę gdy ekran jest blur
     if (!isFocused) {
@@ -72,12 +78,20 @@ export function ProtectedScreen({
     // 2. Inicjalizacja auth zakończona (nie sprawdzamy już sesji)
     // 3. Użytkownik nie jest zalogowany
     // 4. Modal nie był jeszcze pokazany dla tego focusu
+    console.log('[ProtectedScreen] Check:', {
+      isFocused,
+      isInitializing,
+      isAuthenticated,
+      hasShownModal: hasShownModal.current,
+    })
+
     if (
       isFocused &&
       !isInitializing &&
       !isAuthenticated &&
       !hasShownModal.current
     ) {
+      console.log('[ProtectedScreen] Showing auth modal')
       hasShownModal.current = true
       // Przekaż callback przekierowujący na stronę przepisów po zamknięciu modala
       showAuthModal(showSignup ? 'signup' : 'signin', () => {

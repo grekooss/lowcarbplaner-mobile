@@ -11,17 +11,48 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import Checkbox from 'expo-checkbox'
+import { supabase } from '@src/lib/supabase/client'
+import { useAuth } from '@src/hooks/useAuth'
+import Toast from 'react-native-toast-message'
 
 export default function OnboardingScreen() {
   const router = useRouter()
+  const { user } = useAuth()
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const handleContinue = () => {
-    if (!disclaimerAccepted) return
-    router.push('/onboarding/step1')
+  const handleContinue = async () => {
+    if (!disclaimerAccepted || !user) return
+
+    setLoading(true)
+
+    try {
+      // Zapisz disclaimer_accepted_at w bazie
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          disclaimer_accepted_at: new Date().toISOString(),
+        })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      // Kontynuuj do kolejnych kroków
+      router.push('/onboarding/step1')
+    } catch (error) {
+      console.error('Error accepting disclaimer:', error)
+      Toast.show({
+        type: 'error',
+        text1: 'Błąd',
+        text2: 'Nie udało się zapisać zgody. Spróbuj ponownie.',
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -80,11 +111,18 @@ export default function OnboardingScreen() {
 
         {/* Continue Button */}
         <TouchableOpacity
-          style={[styles.button, !disclaimerAccepted && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            (!disclaimerAccepted || loading) && styles.buttonDisabled,
+          ]}
           onPress={handleContinue}
-          disabled={!disclaimerAccepted}
+          disabled={!disclaimerAccepted || loading}
         >
-          <Text style={styles.buttonText}>Kontynuuj</Text>
+          {loading ? (
+            <ActivityIndicator color='#ffffff' />
+          ) : (
+            <Text style={styles.buttonText}>Kontynuuj</Text>
+          )}
         </TouchableOpacity>
       </View>
     </ScrollView>

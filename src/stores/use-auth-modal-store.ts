@@ -19,10 +19,12 @@ export const useAuthModalStore = create<AuthModalStore>((set, get) => ({
   onCloseCallback: null,
 
   showAuthModal: (type: AuthModalType, onClose?: () => void) => {
+    const { onCloseCallback: existingCallback } = get()
     set({
       isVisible: true,
       modalType: type,
-      onCloseCallback: onClose || null,
+      // Zachowaj istniejący callback jeśli nie przekazano nowego
+      onCloseCallback: onClose !== undefined ? onClose : existingCallback,
     })
   },
 

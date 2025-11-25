@@ -39,15 +39,37 @@ export function useAuth(redirectTo?: string): UseAuthReturn {
   // Listen for auth changes
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-        })
-      }
-      setIsInitializing(false)
-    })
+    supabase.auth
+      .getSession()
+      .then(({ data: { session }, error }) => {
+        // Handle invalid refresh token - clear corrupted session
+        if (error) {
+          console.warn(
+            '[useAuth] Session error, clearing auth state:',
+            error.message
+          )
+          supabase.auth.signOut().catch(() => {
+            // Ignore signOut errors - we just want to clear local state
+          })
+          setUser(null)
+          setIsInitializing(false)
+          return
+        }
+
+        if (session?.user) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+          })
+        }
+        setIsInitializing(false)
+      })
+      .catch((err) => {
+        // Catch any unexpected errors during session retrieval
+        console.warn('[useAuth] Unexpected session error:', err.message)
+        setUser(null)
+        setIsInitializing(false)
+      })
 
     // Listen for auth changes
     const {
@@ -89,11 +111,14 @@ export function useAuth(redirectTo?: string): UseAuthReturn {
           .from('profiles')
           .select('disclaimer_accepted_at')
           .eq('id', data.user.id)
-          .single()
+          .maybeSingle() // Użyj maybeSingle() - nie rzuca błędu gdy brak rekordu
 
         // Przekieruj odpowiednio
-        if (!profile?.disclaimer_accepted_at) {
-          router.replace('/onboarding' as any)
+        // Jeśli profil nie istnieje → onboarding (zalogowany musi utworzyć profil)
+        // Jeśli profil istnieje ale disclaimer nie zaakceptowany → onboarding
+        // Jeśli profil istnieje i disclaimer zaakceptowany → app
+        if (!profile || !profile.disclaimer_accepted_at) {
+          router.replace('/onboarding')
         } else {
           router.replace((redirectTo || '/(app)') as any)
         }

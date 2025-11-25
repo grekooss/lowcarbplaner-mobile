@@ -14,11 +14,13 @@ import {
   StyleSheet,
 } from 'react-native'
 import { useRouter } from 'expo-router'
+import { useOnboarding } from '@src/contexts/OnboardingContext'
 
 type Gender = 'male' | 'female'
 
 export default function OnboardingStep1() {
   const router = useRouter()
+  const { updateData } = useOnboarding()
 
   const [gender, setGender] = useState<Gender | null>(null)
   const [age, setAge] = useState('')
@@ -35,9 +37,16 @@ export default function OnboardingStep1() {
     Number(height) > 0
 
   const handleContinue = () => {
-    if (!isValid) return
+    if (!isValid || !gender) return
 
-    // TODO: Zapisać dane w stanie/context
+    // Zapisz dane do context
+    updateData({
+      gender,
+      age: Number(age),
+      weight_kg: Number(weight),
+      height_cm: Number(height),
+    })
+
     router.push('/onboarding/step2')
   }
 

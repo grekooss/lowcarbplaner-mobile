@@ -16,6 +16,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { AppQueryClientProvider } from '@src/providers/query-client-provider'
 import AuthModal from '@src/components/auth/auth-modal'
+import { OnboardingGuard } from '@src/components/auth/onboarding-guard'
+import { OnboardingProvider } from '@src/contexts/OnboardingContext'
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -36,20 +38,27 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <AppQueryClientProvider>
-          <ThemeProvider
-            value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
-          >
-            <Stack>
-              <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-              <Stack.Screen
-                name='modal'
-                options={{ presentation: 'modal', title: 'Modal' }}
-              />
-            </Stack>
-            <StatusBar style='dark' backgroundColor='#f9fafb' />
-            <Toast />
-            <AuthModal />
-          </ThemeProvider>
+          <OnboardingProvider>
+            <ThemeProvider
+              value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
+            >
+              <Stack>
+                <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+                <Stack.Screen
+                  name='onboarding'
+                  options={{ headerShown: false, gestureEnabled: false }}
+                />
+                <Stack.Screen
+                  name='modal'
+                  options={{ presentation: 'modal', title: 'Modal' }}
+                />
+              </Stack>
+              <StatusBar style='dark' backgroundColor='#f9fafb' />
+              <Toast />
+              <AuthModal />
+              <OnboardingGuard />
+            </ThemeProvider>
+          </OnboardingProvider>
         </AppQueryClientProvider>
       </GestureHandlerRootView>
     </SafeAreaProvider>

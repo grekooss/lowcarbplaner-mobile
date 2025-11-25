@@ -430,29 +430,91 @@ export function useGenerateMealPlan() {
         throw new Error('Nie jesteś zalogowany')
       }
 
-      // Oblicz zakres dat (dzisiaj + 6 dni)
-      const today = new Date()
-      const startDate = today.toISOString().split('T')[0]
-      const endDate = new Date(today)
-      endDate.setDate(today.getDate() + 6)
-      const endDateStr = endDate.toISOString().split('T')[0]
+      // 1. Pobranie profilu użytkownika
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select(
+          'id, target_calories, target_carbs_g, target_protein_g, target_fats_g'
+        )
+        .eq('id', user.id)
+        .single()
 
-      // Wywołaj funkcję Edge do generowania planu
-      const { data, error } = await supabase.functions.invoke(
-        'generate-meal-plan',
-        {
-          body: {
-            start_date: startDate,
-            end_date: endDateStr,
-          },
-        }
-      )
-
-      if (error) {
-        throw new Error(`Błąd generowania planu: ${error.message}`)
+      if (profileError) {
+        throw new Error(`Błąd pobierania profilu: ${profileError.message}`)
       }
 
-      return data
+      // 2. Import generatora
+      const { cleanupOldMealPlans, findMissingDays, generateDayPlan } =
+        await import('@/src/services/meal-plan-generator')
+
+      // 3. Wyczyść stare plany
+      try {
+        await cleanupOldMealPlans(user.id)
+      } catch (cleanupError) {
+        console.warn('Błąd czyszczenia starych planów:', cleanupError)
+      }
+
+      // 4. Znajdź brakujące dni
+      const formatLocalDate = (date: Date): string => {
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+      }
+
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      const dates: string[] = []
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(today)
+        date.setDate(today.getDate() + i)
+        dates.push(formatLocalDate(date))
+      }
+
+      const missingDays = await findMissingDays(user.id, dates)
+
+      if (missingDays.length === 0) {
+        throw new Error(
+          'Plan posiłków na następne 7 dni już istnieje i jest kompletny'
+        )
+      }
+
+      console.log(
+        `🤖 Generowanie planu dla ${missingDays.length} brakujących dni`
+      )
+
+      // 5. Generuj plan dla brakujących dni
+      const plannedMeals = []
+
+      for (const date of missingDays) {
+        const dayPlan = await generateDayPlan(user.id, date, {
+          target_calories: profile.target_calories,
+          target_protein_g: profile.target_protein_g,
+          target_carbs_g: profile.target_carbs_g,
+          target_fats_g: profile.target_fats_g,
+        })
+        plannedMeals.push(...dayPlan)
+      }
+
+      console.log(
+        `✅ Wygenerowano ${plannedMeals.length} posiłków dla ${missingDays.length} dni`
+      )
+
+      // 6. Batch insert do bazy
+      const { error: insertError } = await supabase
+        .from('planned_meals')
+        .insert(plannedMeals)
+
+      if (insertError) {
+        throw new Error(`Błąd zapisu planu: ${insertError.message}`)
+      }
+
+      return {
+        status: 'success',
+        generated_count: plannedMeals.length,
+        generated_days: missingDays.length,
+      }
     },
     onSuccess: (data) => {
       // Invalidate wszystkie queries dla planned meals
@@ -463,7 +525,7 @@ export function useGenerateMealPlan() {
       Toast.show({
         type: 'success',
         text1: 'Plan wygenerowany',
-        text2: `Utworzono ${data.generated_count} posiłków na 7 dni`,
+        text2: `Utworzono ${data.generated_count} posiłków na ${data.generated_days} ${data.generated_days === 1 ? 'dzień' : 'dni'}`,
         visibilityTime: 3000,
       })
     },

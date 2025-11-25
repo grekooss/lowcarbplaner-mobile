@@ -11,9 +11,15 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
+import Toast from 'react-native-toast-message'
+import { supabase } from '@src/lib/supabase/client'
+import { useAuth } from '@src/hooks/useAuth'
+import { useOnboarding } from '@src/contexts/OnboardingContext'
+import { calculateNutritionGoals } from '@src/lib/utils/nutrition-calculator'
 
 type ActivityLevel = 'very_low' | 'low' | 'moderate' | 'high' | 'very_high'
 type Goal = 'weight_loss' | 'weight_maintenance'
@@ -65,17 +71,87 @@ const GOALS: { value: Goal; label: string; description: string }[] = [
 
 export default function OnboardingStep2() {
   const router = useRouter()
+  const { user } = useAuth()
+  const { data: onboardingData, clearData } = useOnboarding()
 
   const [activityLevel, setActivityLevel] = useState<ActivityLevel | null>(null)
   const [goal, setGoal] = useState<Goal | null>(null)
+  const [loading, setLoading] = useState(false)
 
   const isValid = activityLevel && goal
 
-  const handleContinue = () => {
-    if (!isValid) return
+  const handleContinue = async () => {
+    if (!isValid || !user || !activityLevel || !goal) return
 
-    // TODO: Zapisać dane i wysłać do API
-    router.replace('/(app)' as any)
+    // Walidacja danych z poprzednich kroków
+    if (
+      !onboardingData.gender ||
+      !onboardingData.age ||
+      !onboardingData.weight_kg ||
+      !onboardingData.height_cm
+    ) {
+      Toast.show({
+        type: 'error',
+        text1: 'Błąd',
+        text2: 'Brak danych z poprzednich kroków. Wróć i wypełnij formularz.',
+      })
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      // Oblicz cele makro na podstawie wszystkich danych
+      const nutritionGoals = calculateNutritionGoals({
+        gender: onboardingData.gender,
+        age: onboardingData.age,
+        weight_kg: onboardingData.weight_kg,
+        height_cm: onboardingData.height_cm,
+        activity_level: activityLevel,
+        goal,
+        weight_loss_rate_kg_week: goal === 'weight_loss' ? 0.5 : undefined,
+      })
+
+      // Zapisz wszystkie dane do bazy
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          gender: onboardingData.gender,
+          age: onboardingData.age,
+          weight_kg: onboardingData.weight_kg,
+          height_cm: onboardingData.height_cm,
+          activity_level: activityLevel,
+          goal,
+          weight_loss_rate_kg_week: goal === 'weight_loss' ? 0.5 : null,
+          target_calories: nutritionGoals.target_calories,
+          target_carbs_g: nutritionGoals.target_carbs_g,
+          target_protein_g: nutritionGoals.target_protein_g,
+          target_fats_g: nutritionGoals.target_fats_g,
+        })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      // Wyczyść dane z context
+      clearData()
+
+      Toast.show({
+        type: 'success',
+        text1: 'Witaj w LowCarb Planer!',
+        text2: 'Twój profil został utworzony',
+      })
+
+      router.replace('/(tabs)' as any)
+    } catch (error) {
+      console.error('Error saving onboarding data:', error)
+      Toast.show({
+        type: 'error',
+        text1: 'Błąd',
+        text2: 'Nie udało się zapisać danych. Spróbuj ponownie.',
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -164,11 +240,18 @@ export default function OnboardingStep2() {
               <Text style={styles.backButtonText}>Wstecz</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.button, !isValid && styles.buttonDisabled]}
+              style={[
+                styles.button,
+                (!isValid || loading) && styles.buttonDisabled,
+              ]}
               onPress={handleContinue}
-              disabled={!isValid}
+              disabled={!isValid || loading}
             >
-              <Text style={styles.buttonText}>Zakończ</Text>
+              {loading ? (
+                <ActivityIndicator color='#ffffff' />
+              ) : (
+                <Text style={styles.buttonText}>Zakończ</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
